@@ -21,7 +21,11 @@ Three phases: scaffold the working app with user config storage, wire up generat
   2. `PATCH /users/{id}` updates quota or multiplier and the change is reflected immediately
   3. Request to a non-existent user returns 404 with a clear message
   4. App starts cleanly via `uvicorn` with Postgres connected (migrations applied)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 01-01-PLAN.md — Project scaffold: package, config, async DB, ORM model, schemas, FastAPI app, Docker Compose
+- [ ] 01-02-PLAN.md — User endpoints: POST /users (201), PATCH /users/{id} (200/404), wired into main.py
 
 ### Phase 2: Generation + Quota + Usage
 **Goal**: The generate endpoint enforces quota using Postgres row locks, debits actual tokens, and records every request in the usage log
@@ -51,6 +55,6 @@ Three phases: scaffold the working app with user config storage, wire up generat
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scaffold + User Config | 0/? | Not started | - |
+| 1. Scaffold + User Config | 1/2 | In Progress|  |
 | 2. Generation + Quota + Usage | 0/? | Not started | - |
 | 3. Inspection + Ship | 0/? | Not started | - |
