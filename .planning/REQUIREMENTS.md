@@ -60,11 +60,29 @@
 
 ## Traceability
 
-| REQ-ID | Phase |
-|--------|-------|
-| UCONF-01..04 | Phase 1 |
-| GEN-01..06 | Phase 2 |
-| QUOTA-01..05 | Phase 2 |
-| USAGE-01..03 | Phase 2 |
-| INSPECT-01..02 | Phase 3 |
-| INFRA-01..04 | Phase 3 |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| UCONF-01 | Phase 1 | Pending |
+| UCONF-02 | Phase 1 | Pending |
+| UCONF-03 | Phase 1 | Pending |
+| UCONF-04 | Phase 1 | Pending |
+| GEN-01 | Phase 2 | Pending |
+| GEN-02 | Phase 2 | Pending |
+| GEN-03 | Phase 2 | Pending |
+| GEN-04 | Phase 2 | Pending |
+| GEN-05 | Phase 2 | Pending |
+| GEN-06 | Phase 2 | Pending |
+| QUOTA-01 | Phase 2 | Pending |
+| QUOTA-02 | Phase 2 | Pending |
+| QUOTA-03 | Phase 2 | Pending |
+| QUOTA-04 | Phase 2 | Pending |
+| QUOTA-05 | Phase 2 | Pending |
+| USAGE-01 | Phase 2 | Pending |
+| USAGE-02 | Phase 2 | Pending |
+| USAGE-03 | Phase 2 | Pending |
+| INSPECT-01 | Phase 3 | Pending |
+| INSPECT-02 | Phase 3 | Pending |
+| INFRA-01 | Phase 3 | Pending |
+| INFRA-02 | Phase 3 | Pending |
+| INFRA-03 | Phase 3 | Pending |
+| INFRA-04 | Phase 3 | Pending |
