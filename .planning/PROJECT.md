@@ -12,7 +12,8 @@ Correct per-user quota enforcement with Postgres row locking — the quota check
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] FastAPI app with clean route separation — Validated in Phase 1: Scaffold + User Config
+- [x] Per-user quota and multiplier configuration (create/update) — Validated in Phase 1: Scaffold + User Config
 
 ### Active
 
@@ -130,4 +131,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-27 after initialization*
+*Last updated: 2026-06-27 — Phase 1 complete (scaffold, user CRUD endpoints, Docker Compose)*
