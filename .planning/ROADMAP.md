@@ -37,7 +37,12 @@ Plans:
   3. User with no quota config returns 402 with a distinct message
   4. Two concurrent requests from the same user serialize at the DB lock — neither overruns quota beyond one request's bounded overrun
   5. AI provider failure returns 503 and no credits are debited
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Provider package: config additions, BaseProvider ABC, MockProvider, ClaudeProvider, get_provider factory
+- [ ] 02-02-PLAN.md — UsageLog ORM model (models.py) + generate schemas (schemas.py)
+- [ ] 02-03-PLAN.md — Generate router with quota enforcement flow + wire into main.py
 
 ### Phase 3: Inspection + Ship
 **Goal**: The service is reviewable end-to-end — inspection endpoints work, all 9 test scenarios pass, design doc and Docker Compose let a reviewer run and understand the project
@@ -56,5 +61,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scaffold + User Config | 2/2 | Complete   | 2026-06-26 |
-| 2. Generation + Quota + Usage | 0/? | Not started | - |
+| 2. Generation + Quota + Usage | 0/3 | Not started | - |
 | 3. Inspection + Ship | 0/? | Not started | - |
