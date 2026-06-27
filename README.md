@@ -7,13 +7,62 @@ A FastAPI service that enforces per-user credit quotas with race-safe Postgres r
 ## Quick Start
 
 ```bash
-docker-compose up --build
+make up
 ```
 
 Service available at http://localhost:8000.
 Interactive API docs at http://localhost:8000/docs.
 
-The Docker Compose setup starts Postgres (port 5432) and the app (port 8000). The `DATABASE_URL` environment variable is set automatically inside Docker.
+---
+
+## All Commands
+
+```
+make up          Start all services (build if needed)
+make down        Stop all services
+make restart     Restart the app container only (faster than full rebuild)
+make build       Rebuild images without starting
+make install     Install Python test dependencies into the active venv
+make test        Run the full pytest suite (starts db automatically)
+make logs        Follow logs for all services
+make logs-app    Follow app logs only
+make logs-db     Follow db logs only
+make ps          Show running service status
+make clean       Stop services and delete all volumes (full reset)
+make demo        Smoke test: create user, generate, check usage
+make real-llm    Start with real Claude API
+make help        Show all targets with descriptions
+```
+
+---
+
+## Running Tests
+
+```bash
+# One-time: install test dependencies (activate your venv first)
+python3 -m venv venv && source venv/bin/activate
+make install
+
+# Then any time you want to run tests:
+make test
+```
+
+`make test` starts the database container, waits for it to be healthy, then runs all 9 pytest scenarios against the `metering_test` database (separate from the dev database so the running service is not affected).
+
+---
+
+## Using the Real Claude API
+
+```bash
+make real-llm ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Or export the key first:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+make real-llm
+```
 
 ---
 
@@ -21,31 +70,11 @@ The Docker Compose setup starts Postgres (port 5432) and the app (port 8000). Th
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes | — | Postgres async URL. Example: `postgresql+asyncpg://postgres:postgres@localhost:5432/metering`. Set automatically by docker-compose. |
+| `DATABASE_URL` | Yes | — | Postgres async URL. Set automatically by docker-compose. |
 | `USE_REAL_LLM` | No | `false` | Set to `true` to use ClaudeProvider instead of MockProvider. |
 | `ANTHROPIC_API_KEY` | No | `""` | Required when `USE_REAL_LLM=true`. |
 
-For local (non-Docker) development, create a `.env` file at the repo root with the variables above. `pydantic-settings` reads it automatically.
-
----
-
-## Running Tests
-
-```bash
-# Start the database container only
-docker-compose up db -d
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create the test database (separate from the dev database)
-PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE metering_test;"
-
-# Run tests
-pytest tests/ -v
-```
-
-Tests use `metering_test` (not `metering`) to avoid interfering with the running service. The test suite sets `DATABASE_URL` to point at `metering_test` automatically.
+For local (non-Docker) development, create a `.env` file at the repo root. `pydantic-settings` reads it automatically.
 
 ---
 
@@ -73,6 +102,8 @@ curl -s http://localhost:8000/users/1/usage | python3 -m json.tool
 # Usage history (paginated)
 curl -s "http://localhost:8000/users/1/usage/history?limit=10&offset=0" | python3 -m json.tool
 ```
+
+Or just run `make demo` to execute all of the above in one shot.
 
 ---
 
