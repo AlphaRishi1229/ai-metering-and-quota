@@ -49,8 +49,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Provider package: config additions, BaseProvider ABC, MockProvider, ClaudeProvider, get_provider factory
-- [ ] 02-02-PLAN.md — UsageLog ORM model (models.py) + generate schemas (schemas.py)
+- [x] 02-01-PLAN.md — Provider package: config additions, BaseProvider ABC, MockProvider, ClaudeProvider, get_provider factory
+- [x] 02-02-PLAN.md — UsageLog ORM model (models.py) + generate schemas (schemas.py)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -76,5 +76,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scaffold + User Config | 2/2 | Complete   | 2026-06-26 |
-| 2. Generation + Quota + Usage | 0/3 | Not started | - |
+| 2. Generation + Quota + Usage | 2/3 | In Progress|  |
 | 3. Inspection + Ship | 0/? | Not started | - |
