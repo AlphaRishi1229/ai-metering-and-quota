@@ -82,7 +82,7 @@ async def generate(
             )
             user = result.scalar_one_or_none()
             # user must exist here (we just checked above); skip None guard
-            user.reserved_credits -= estimated_credits
+            user.reserved_credits = max(0, user.reserved_credits - estimated_credits)
             user.used_credits += actual_credits
 
             db.add(UsageLog(
@@ -134,7 +134,7 @@ async def generate(
                     )
                     u = result.scalar_one_or_none()
                     if u is not None:
-                        u.reserved_credits -= estimated_credits
+                        u.reserved_credits = max(0, u.reserved_credits - estimated_credits)
             except Exception:
                 logger.error(
                     "Failed to release reservation for user_id=%s estimated_credits=%s",
