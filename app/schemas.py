@@ -22,7 +22,7 @@ class UserResponse(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    prompt: str = Field(min_length=1)
+    prompt: str = Field(min_length=1, max_length=32_000)
 
 
 class UsageDetail(BaseModel):
