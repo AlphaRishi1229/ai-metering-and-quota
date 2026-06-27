@@ -42,16 +42,20 @@ async def test_engine():
 
 @pytest_asyncio.fixture
 async def db(test_engine):
+    # Separate session for test assertions — not shared with the client
     AsyncTestSession = async_sessionmaker(test_engine, expire_on_commit=False)
     async with AsyncTestSession() as session:
         yield session
-        await session.rollback()
 
 
 @pytest_asyncio.fixture
-async def client(db):
+async def client(test_engine):
+    # Each HTTP request gets a fresh session (matches production get_db behaviour)
+    AsyncTestSession = async_sessionmaker(test_engine, expire_on_commit=False)
+
     async def override_get_db():
-        yield db
+        async with AsyncTestSession() as session:
+            yield session
 
     app.dependency_overrides[get_db] = override_get_db
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
