@@ -7,7 +7,7 @@ Three phases: scaffold the working app with user config storage, wire up generat
 ## Phases
 
 - [x] **Phase 1: Scaffold + User Config** - FastAPI app, DB models, CRUD for user quota/multiplier (completed 2026-06-26)
-- [ ] **Phase 2: Generation + Quota + Usage** - Generate endpoint, SELECT FOR UPDATE enforcement, usage log
+- [x] **Phase 2: Generation + Quota + Usage** - Generate endpoint, SELECT FOR UPDATE enforcement, usage log (completed 2026-06-27)
 - [ ] **Phase 3: Inspection + Ship** - GET usage endpoints, pytest suite, design doc, Docker Compose, README
 
 ## Phase Details
@@ -54,7 +54,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-03-PLAN.md — Generate router with quota enforcement flow + wire into main.py
+- [x] 02-03-PLAN.md — Generate router with quota enforcement flow + wire into main.py
 
 ### Phase 3: Inspection + Ship
 
@@ -76,5 +76,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scaffold + User Config | 2/2 | Complete   | 2026-06-26 |
-| 2. Generation + Quota + Usage | 2/3 | In Progress|  |
+| 2. Generation + Quota + Usage | 3/3 | Complete   | 2026-06-27 |
 | 3. Inspection + Ship | 0/? | Not started | - |
