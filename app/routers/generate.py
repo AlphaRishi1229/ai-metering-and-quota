@@ -22,6 +22,11 @@ async def generate(
     db: AsyncSession = Depends(get_db),
     provider: BaseProvider = Depends(get_provider),
 ):
+    # --- cheap existence pre-check before estimation (WR-04) ---
+    exists = await db.scalar(select(User.id).where(User.id == user_id))
+    if exists is None:
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+
     # --- estimate (sync, outside any TX) ---
     estimated_tokens = provider.estimate_tokens(body.prompt)
 
