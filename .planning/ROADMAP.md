@@ -69,7 +69,17 @@ Plans:
   4. `pytest` passes all 9 required scenarios from the spec
   5. DESIGN.md exists in repo and explains the concurrency model and key tradeoffs
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Inspection schemas (UsageResponse, UsageLogEntry) + inspection router (GET /usage, GET /usage/history) + wire into main.py + test deps in requirements.txt
+
+**Wave 2** *(blocked on Wave 1 completion; 03-02 and 03-03 run in parallel)*
+
+- [ ] 03-02-PLAN.md — pytest suite: conftest.py with metering_test DB, all 9 test scenarios
+- [ ] 03-03-PLAN.md — DESIGN.md + README.md at repo root
 
 ## Progress
 
@@ -77,4 +87,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Scaffold + User Config | 2/2 | Complete   | 2026-06-26 |
 | 2. Generation + Quota + Usage | 3/3 | Complete   | 2026-06-27 |
-| 3. Inspection + Ship | 0/? | Not started | - |
+| 3. Inspection + Ship | 0/3 | Not started | - |
