@@ -1,3 +1,5 @@
+import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -35,3 +37,25 @@ class UsageDetail(BaseModel):
 class GenerateResponse(BaseModel):
     text: str
     usage: UsageDetail
+
+
+class UsageResponse(BaseModel):
+    quota: int
+    multiplier: float
+    used: int
+    reserved: int
+    remaining: int
+
+    model_config = {"from_attributes": True}
+
+
+class UsageLogEntry(BaseModel):
+    id: int
+    prompt_tokens: int
+    completion_tokens: int
+    estimated_credits: int | None
+    actual_credits: int | None
+    status: str
+    created_at: datetime.datetime
+
+    model_config = {"from_attributes": True}
