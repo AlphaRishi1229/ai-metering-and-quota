@@ -8,7 +8,7 @@ Three phases: scaffold the working app with user config storage, wire up generat
 
 - [x] **Phase 1: Scaffold + User Config** - FastAPI app, DB models, CRUD for user quota/multiplier (completed 2026-06-26)
 - [x] **Phase 2: Generation + Quota + Usage** - Generate endpoint, SELECT FOR UPDATE enforcement, usage log (completed 2026-06-27)
-- [ ] **Phase 3: Inspection + Ship** - GET usage endpoints, pytest suite, design doc, Docker Compose, README
+- [x] **Phase 3: Inspection + Ship** - GET usage endpoints, pytest suite, design doc, Docker Compose, README (completed 2026-06-27)
 
 ## Phase Details
 
@@ -78,8 +78,8 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion; 03-02 and 03-03 run in parallel)*
 
-- [ ] 03-02-PLAN.md — pytest suite: conftest.py with metering_test DB, all 9 test scenarios
-- [ ] 03-03-PLAN.md — DESIGN.md + README.md at repo root
+- [x] 03-02-PLAN.md — pytest suite: conftest.py with metering_test DB, all 9 test scenarios
+- [x] 03-03-PLAN.md — DESIGN.md + README.md at repo root
 
 ## Progress
 
@@ -87,4 +87,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Scaffold + User Config | 2/2 | Complete   | 2026-06-26 |
 | 2. Generation + Quota + Usage | 3/3 | Complete   | 2026-06-27 |
-| 3. Inspection + Ship | 1/3 | In Progress|  |
+| 3. Inspection + Ship | 3/3 | Complete   | 2026-06-27 |
