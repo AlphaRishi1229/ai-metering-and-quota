@@ -165,7 +165,7 @@ Probability: low (requires a DB failure in a narrow window). Impact: bounded to 
 | POST | `/users/` | `{quota: int, multiplier: float}` | 201 `UserResponse` (id, quota, multiplier, used_credits, reserved_credits) | 422 validation |
 | PATCH | `/users/{user_id}` | `{quota?: int, multiplier?: float}` | 200 `UserResponse` | 404 user not found, 422 validation |
 | POST | `/users/{user_id}/generate` | `{prompt: str}` | 200 `{text: str, usage: {prompt_tokens, completion_tokens, estimated_credits, actual_credits}}` | 402 quota exceeded, 404 user not found, 503 AI provider failure |
-| GET | `/users/{user_id}/usage` | — | 200 `{user_id, quota, multiplier, used, reserved, remaining}` | 404 user not found |
+| GET | `/users/{user_id}/usage` | — | 200 `{quota, multiplier, used, reserved, remaining}` | 404 user not found |
 | GET | `/users/{user_id}/usage/history` | `?limit=20&offset=0` | 200 `list[{id, prompt_tokens, completion_tokens, estimated_credits, actual_credits, status, created_at}]` | 404 user not found |
 
 `remaining` in the usage response is computed server-side as `quota - used_credits - reserved_credits` and is never stored.
