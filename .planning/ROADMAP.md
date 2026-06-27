@@ -74,7 +74,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Inspection schemas (UsageResponse, UsageLogEntry) + inspection router (GET /usage, GET /usage/history) + wire into main.py + test deps in requirements.txt
+- [x] 03-01-PLAN.md — Inspection schemas (UsageResponse, UsageLogEntry) + inspection router (GET /usage, GET /usage/history) + wire into main.py + test deps in requirements.txt
 
 **Wave 2** *(blocked on Wave 1 completion; 03-02 and 03-03 run in parallel)*
 
@@ -87,4 +87,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Scaffold + User Config | 2/2 | Complete   | 2026-06-26 |
 | 2. Generation + Quota + Usage | 3/3 | Complete   | 2026-06-27 |
-| 3. Inspection + Ship | 0/3 | Not started | - |
+| 3. Inspection + Ship | 1/3 | In Progress|  |
