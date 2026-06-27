@@ -3,6 +3,7 @@ import os
 TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/metering_test"
 os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
 
+import asyncpg
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
@@ -14,6 +15,14 @@ from app.database import get_db, Base
 
 @pytest_asyncio.fixture(scope="session")
 async def test_engine():
+    conn = await asyncpg.connect("postgresql://postgres:postgres@localhost:5432/postgres")
+    try:
+        await conn.execute("CREATE DATABASE metering_test")
+    except asyncpg.exceptions.DuplicateDatabaseError:
+        pass
+    finally:
+        await conn.close()
+
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
