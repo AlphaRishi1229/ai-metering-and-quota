@@ -1,9 +1,14 @@
 ---
 phase: 02-generation-quota-usage
 verified: 2026-06-27T00:00:00Z
-status: human_needed
-score: 4/5 must-haves verified
-overrides_applied: 0
+status: passed
+score: 5/5 must-haves verified
+overrides_applied: 1
+overrides:
+  - must_have: "User with no quota config returns 402 with a distinct message (ROADMAP SC3, QUOTA-02, D-15)"
+    reason: "Missing user returns 404 which is semantically correct REST; distinct from 402 quota exceeded. Plan 03 explicitly allowed 404 or 402. quota is NOT NULL so no-quota-config = user-not-found = 404."
+    accepted_by: "alpha-rishi"
+    accepted_at: "2026-06-27T00:00:00Z"
 human_verification:
   - test: "Create a user with quota=1, then POST /users/{id}/generate with any prompt. Confirm 402 is returned before any generation runs."
     expected: "HTTP 402 with detail 'Quota exceeded'"
