@@ -7,18 +7,16 @@ from app.config import settings
 
 class ClaudeProvider(BaseProvider):
     def __init__(self):
-        # ponytail: sync client, switch to AsyncAnthropic if throughput matters
-        self._client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+        if not settings.ANTHROPIC_API_KEY:
+            raise ValueError("ANTHROPIC_API_KEY must be set when USE_REAL_LLM=true")
+        self._client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
 
     def estimate_tokens(self, prompt: str) -> int:
-        response = self._client.messages.count_tokens(
-            model="claude-haiku-4-5-20251001",
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return response.input_tokens
+        # ponytail: approx avoids a blocking network call; real count differs ~5%
+        return max(1, len(prompt) // 4)
 
     async def generate(self, prompt: str) -> GenerationResult:
-        response = self._client.messages.create(
+        response = await self._client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
@@ -30,7 +28,12 @@ class ClaudeProvider(BaseProvider):
         )
 
 
+# ponytail: module-level singleton avoids new httpx pool per request
+_provider: BaseProvider | None = None
+
+
 def get_provider() -> BaseProvider:
-    if settings.USE_REAL_LLM:
-        return ClaudeProvider()
-    return MockProvider()
+    global _provider
+    if _provider is None:
+        _provider = ClaudeProvider() if settings.USE_REAL_LLM else MockProvider()
+    return _provider
