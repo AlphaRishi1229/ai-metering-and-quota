@@ -312,9 +312,11 @@ Postgres row locking is sufficient for per-user quota enforcement. Adding Redis 
 
 ## Known Limitation
 
-If the settle transaction (T=2) fails after the AI has already generated text (e.g., the database crashes between T=1 and T=2), the user receives the generated text but their credits are not debited. This is an undercharge, not an overcharge. The `finally` block in the generate handler releases the reservation (`reserved_credits -= estimated_credits`) so subsequent requests are not blocked by a dangling reservation. The generation text has already been returned to the client.
+If the settle transaction (T=2) fails after the AI has already generated text (e.g., the database becomes unavailable between T=1 and T=2), the generation is treated as a failure: the settle TX shares the same `try` block as the AI call, so a settle error is caught by the same handler as an AI error. The request returns **503**, the `finally` block releases the reservation (`reserved_credits -= estimated_credits`), and the user is **not charged**. The generated text is discarded rather than returned, because the service cannot atomically return text and record the charge for it.
 
-Probability: low (requires a DB failure in a narrow window). Impact: bounded to one request per occurrence. A production system would mitigate with an outbox pattern or idempotent settle retry. This service documents the limitation rather than adding that complexity.
+The cost falls on the operator, not the user: a successful AI call whose settle write fails has already incurred real API spend but produces no billing record — an **undercharge, never an overcharge**. The usage row is written with `status=ai_error` even though the AI itself succeeded; distinguishing "AI failed" from "settle failed" would require splitting the `try` block, which the current version omits for simplicity.
+
+Probability: low (requires a DB failure in a narrow window). Impact: bounded to one request per occurrence. A production system would mitigate with an outbox pattern (return the text, settle asynchronously with retry) or an idempotent settle. This service documents the limitation rather than adding that complexity.
 
 ---
 

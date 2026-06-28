@@ -47,7 +47,7 @@ make install
 make test
 ```
 
-`make test` starts the database container, waits for it to be healthy, then runs all 9 pytest scenarios against the `metering_test` database (separate from the dev database so the running service is not affected).
+`make test` starts the database container, waits for it to be healthy, then runs all 11 pytest scenarios against the `metering_test` database (separate from the dev database so the running service is not affected).
 
 ---
 

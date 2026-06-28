@@ -1,11 +1,14 @@
 import asyncio
 
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.models import UsageLog, User
 from app.providers.base import BaseProvider, GenerationResult
-from app.providers.claude import get_provider
+from app.providers import get_provider
 from app.main import app
 
 
@@ -195,33 +198,97 @@ async def test_behavior_when_actual_usage_differs_from_estimate(client, db):
     ), "No log row found where estimated_credits != actual_credits"
 
 
-async def test_behavior_for_near_simultaneous_requests_from_same_user(client, db):
-    """Behavior for near-simultaneous requests from the same user"""
-    # quota=50, multiplier=1.0; prompt of ~40 chars → ~10 tokens → ~10 credits each
-    # Two concurrent requests: combined cost ~20 credits ≤ 50, both may succeed
-    # OR quota small enough one 402s — key invariant: used_credits never > quota after settlement
-    user_id = await create_user(client, quota=50, multiplier=1.0)
+async def test_concurrent_overflow_rejects_exactly_one(client, db):
+    """Two near-simultaneous requests that cannot both fit — exactly one is rejected.
+
+    Deterministic sizing: prompt 'hello there!!' is 13 chars → 3 estimated tokens
+    → 3 × 10.0 = 30 estimated credits. With quota=50, whichever request commits its
+    reservation first leaves 20 credits; the other sees 30 > 20 and gets a 402. The
+    persisted reserved_credits is what carries the first request's in-flight budget
+    across to the second request's quota check.
+
+    This drives the endpoint, not the lock in isolation — the in-process ASGI harness
+    serializes the two calls, so it cannot reproduce a true DB race. The row lock that
+    guarantees this same outcome under real parallelism is proven directly in
+    test_select_for_update_locks_the_user_row below.
+    """
+    user_id = await create_user(client, quota=50, multiplier=10.0)
 
     results = await asyncio.gather(
-        client.post(f"/users/{user_id}/generate", json={"prompt": "concurrent request one"}),
-        client.post(f"/users/{user_id}/generate", json={"prompt": "concurrent request two"}),
+        client.post(f"/users/{user_id}/generate", json={"prompt": "hello there!!"}),
+        client.post(f"/users/{user_id}/generate", json={"prompt": "hello there!!"}),
         return_exceptions=True,
     )
+    statuses = sorted(
+        "exception" if isinstance(r, Exception) else r.status_code for r in results
+    )
 
-    statuses = []
-    for r in results:
-        if isinstance(r, Exception):
-            statuses.append("exception")
-        else:
-            statuses.append(r.status_code)
+    assert statuses == [200, 402], (
+        f"Expected exactly one success and one quota rejection, got {statuses} — "
+        f"SELECT FOR UPDATE failed to serialize the concurrent reservations"
+    )
 
-    # At least one must succeed or one may 402 — neither should crash (5xx)
-    assert all(s in (200, 402, "exception") for s in statuses), f"Unexpected statuses: {statuses}"
-
-    # Core invariant: used_credits must not exceed quota after both settle
+    # Winner settled, loser never reserved → no dangling reservation
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     assert user is not None
-    assert user.used_credits <= user.quota, (
-        f"used_credits={user.used_credits} exceeded quota={user.quota} — SELECT FOR UPDATE failed"
+    assert user.reserved_credits == 0, f"dangling reservation: {user.reserved_credits}"
+    assert user.used_credits > 0  # the one that passed was charged actual usage
+
+    # Exactly one success log and one quota_exceeded log
+    result = await db.execute(select(UsageLog).where(UsageLog.user_id == user_id))
+    logs = result.scalars().all()
+    assert sorted(log.status for log in logs) == ["quota_exceeded", "success"]
+
+
+async def test_concurrent_within_budget_both_succeed(client, db):
+    """Near-simultaneous requests that both fit — neither is falsely rejected.
+
+    Guards the opposite failure: an over-eager lock or reservation must not reject a
+    request the quota can actually afford. Both reservations (3 credits each) fit in
+    quota=200, so both return 200 and both reservations are released to 0 at settle.
+    """
+    user_id = await create_user(client, quota=200, multiplier=1.0)
+
+    results = await asyncio.gather(
+        client.post(f"/users/{user_id}/generate", json={"prompt": "hello there!!"}),
+        client.post(f"/users/{user_id}/generate", json={"prompt": "hello there!!"}),
     )
+    assert [r.status_code for r in results] == [200, 200]
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    assert user is not None
+    assert user.reserved_credits == 0  # both reservations released at settle
+    assert user.used_credits > 0
+
+
+async def test_select_for_update_locks_the_user_row(test_engine):
+    """Directly prove the row lock the whole quota design rests on.
+
+    The endpoint concurrency tests above run through an in-process ASGI transport on a
+    single event loop, which serializes the two requests — they exercise the
+    reservation logic but cannot reproduce a real database race. This test races two
+    independent connections: while connection A holds SELECT ... FOR UPDATE on a user
+    row inside an open transaction, connection B's FOR UPDATE NOWAIT on the same row
+    must fail rather than read stale state. That failure is exactly the mechanism that
+    serializes concurrent reservations for the same user in production.
+    """
+    Session = async_sessionmaker(test_engine, expire_on_commit=False)
+    async with Session() as setup:
+        user = User(quota=100, multiplier=1.0)
+        setup.add(user)
+        await setup.commit()
+        user_id = user.id
+
+    async with Session() as a, Session() as b:
+        async with a.begin():
+            # A acquires and holds the row lock for the duration of this block.
+            await a.execute(select(User).where(User.id == user_id).with_for_update())
+            # B cannot lock the same row while A holds it. NOWAIT surfaces the
+            # contention immediately as an error instead of blocking the test.
+            with pytest.raises(DBAPIError):
+                async with b.begin():
+                    await b.execute(
+                        select(User).where(User.id == user_id).with_for_update(nowait=True)
+                    )
