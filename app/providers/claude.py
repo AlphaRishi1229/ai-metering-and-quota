@@ -13,7 +13,6 @@ class ClaudeProvider(BaseProvider):
         self._client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
 
     def estimate_tokens(self, prompt: str) -> int:
-        # ponytail: approx avoids a blocking network call; real count differs ~5%
         return max(1, len(prompt) // 4)
 
     async def generate(self, prompt: str) -> GenerationResult:

@@ -310,7 +310,22 @@ Postgres row locking is sufficient for per-user quota enforcement. Adding Redis 
 
 ---
 
-## Known Limitation
+## Known Limitations
+
+### 1. Quota is a soft cap — actual spend can exceed it
+
+The pre-generation estimate covers prompt tokens only. Completion tokens are unknown until the AI finishes, and they are often much larger than the prompt. A short prompt that passes the quota check at T=0 can produce a long completion that pushes `used_credits` above `quota` at T=2.
+
+```
+quota=1000, used=800, remaining=200
+prompt: "hi" → estimated 2 credits → PASSES
+AI returns 400 completion tokens → actual 802 credits charged
+used_credits = 1602  ← 602 over quota
+```
+
+This is intentional (see "Debit Actual, Not Estimate" in Key Tradeoffs — returning a 402 after the AI has already run would waste real API spend and give the user nothing). But it means quota is not a hard byte ceiling; it is a best-effort reservation boundary. The overrun is bounded to at most one request's worth of credits, and the next request will be blocked at T=0 with a 402. A production system could tighten this by adding a completion buffer to the estimate (e.g. `estimated_prompt_tokens × 2`), at the cost of more false 402s for users near their limit.
+
+### 2. Settle failure: operator is undercharged, user gets nothing
 
 If the settle transaction (T=2) fails after the AI has already generated text (e.g., the database becomes unavailable between T=1 and T=2), the generation is treated as a failure: the settle TX shares the same `try` block as the AI call, so a settle error is caught by the same handler as an AI error. The request returns **503**, the `finally` block releases the reservation (`reserved_credits -= estimated_credits`), and the user is **not charged**. The generated text is discarded rather than returned, because the service cannot atomically return text and record the charge for it.
 
