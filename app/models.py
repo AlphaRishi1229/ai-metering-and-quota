@@ -7,6 +7,8 @@ from app.database import Base
 
 
 class User(Base):
+    """Per-user quota configuration and running credit consumption."""
+
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -17,6 +19,8 @@ class User(Base):
 
 
 class UsageLog(Base):
+    """Audit record for each generation attempt and its outcome."""
+
     __tablename__ = "usage_log"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

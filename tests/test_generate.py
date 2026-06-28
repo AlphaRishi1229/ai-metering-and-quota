@@ -1,5 +1,6 @@
 import asyncio
 
+from httpx import AsyncClient
 from sqlalchemy import select
 
 from app.models import UsageLog, User
@@ -10,7 +11,7 @@ from app.main import app
 
 # --- helpers ---
 
-async def create_user(client, quota: int, multiplier: float) -> int:
+async def create_user(client: AsyncClient, quota: int, multiplier: float) -> int:
     resp = await client.post("/users/", json={"quota": quota, "multiplier": multiplier})
     assert resp.status_code == 201
     return resp.json()["id"]

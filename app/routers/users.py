@@ -10,7 +10,8 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.post("/", response_model=UserResponse, status_code=201)
-async def create_user(body: UserCreate, db: AsyncSession = Depends(get_db)):
+async def create_user(body: UserCreate, db: AsyncSession = Depends(get_db)) -> UserResponse:
+    """Create a new user with the given credit quota and per-token multiplier."""
     user = User(quota=body.quota, multiplier=body.multiplier)
     db.add(user)
     await db.commit()
@@ -23,7 +24,8 @@ async def update_user(
     user_id: int,
     body: UserUpdate,
     db: AsyncSession = Depends(get_db),
-):
+) -> UserResponse:
+    """Partially update a user's quota or multiplier; omitted fields are left unchanged."""
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:

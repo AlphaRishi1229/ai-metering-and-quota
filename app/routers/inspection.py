@@ -12,7 +12,8 @@ router = APIRouter(prefix="/users", tags=["inspection"])
 
 
 @router.get("/{user_id}/usage", response_model=UsageResponse)
-async def get_usage(user_id: int, db: AsyncSession = Depends(get_db)):
+async def get_usage(user_id: int, db: AsyncSession = Depends(get_db)) -> UsageResponse:
+    """Return a user's current credit quota state: used, reserved, and remaining."""
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
@@ -34,7 +35,8 @@ async def get_usage_history(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[UsageLogEntry]:
+    """Return paginated usage log entries for a user, newest first."""
     result = await db.execute(select(User.id).where(User.id == user_id))
     if result.scalar_one_or_none() is None:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")

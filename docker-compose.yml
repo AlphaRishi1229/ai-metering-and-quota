@@ -14,14 +14,21 @@ services:
       retries: 10
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   app:
     build: .
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/metering
+      USE_REAL_LLM: ${USE_REAL_LLM:-false}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+volumes:
+  pgdata:

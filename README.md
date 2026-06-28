@@ -66,6 +66,39 @@ make real-llm
 
 ---
 
+## Testing AI Error Paths (Mock Provider)
+
+The mock provider supports trigger words in the prompt to simulate AI-side failures without a real API key. Include any of these anywhere in your prompt:
+
+| Trigger word | Simulates |
+|---|---|
+| `MOCK_ERROR` | Generic provider error |
+| `MOCK_TIMEOUT` | Request timeout |
+| `MOCK_RATE_LIMIT` | Rate limit exceeded |
+| `MOCK_OVERLOAD` | Provider overload / service unavailable |
+
+All triggers result in a `503` response, a released credit reservation, and a `status=ai_error` row in `usage_log`.
+
+```bash
+# Trigger a generic AI error
+curl -s -X POST http://localhost:8000/users/1/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "MOCK_ERROR summarize this article"}' | python3 -m json.tool
+
+# Trigger a timeout
+curl -s -X POST http://localhost:8000/users/1/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "MOCK_TIMEOUT translate this to French"}' | python3 -m json.tool
+
+# Confirm the reservation was released and credits were not charged
+curl -s http://localhost:8000/users/1/usage | python3 -m json.tool
+
+# Confirm ai_error appears in usage history
+curl -s "http://localhost:8000/users/1/usage/history?limit=5" | python3 -m json.tool
+```
+
+---
+
 ## Environment Variables
 
 | Variable | Required | Default | Description |

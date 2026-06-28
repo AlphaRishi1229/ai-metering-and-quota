@@ -8,7 +8,7 @@ from app.database import get_db
 from app.models import User, UsageLog
 from app.schemas import GenerateRequest, GenerateResponse, UsageDetail
 from app.providers.base import BaseProvider
-from app.providers.claude import get_provider
+from app.providers import get_provider
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +21,14 @@ async def generate(
     body: GenerateRequest,
     db: AsyncSession = Depends(get_db),
     provider: BaseProvider = Depends(get_provider),
-):
+) -> GenerateResponse:
+    """Reserve credits, call the AI provider, then debit actual token usage."""
     # --- estimate (sync, outside any TX) ---
     estimated_tokens = provider.estimate_tokens(body.prompt)
+    logger.info(
+        "generate request | user_id=%s prompt_len=%s estimated_tokens=%s provider=%s",
+        user_id, len(body.prompt), estimated_tokens, type(provider).__name__,
+    )
 
     # --- RESERVE TX: SELECT FOR UPDATE, quota check, increment reserved_credits ---
     quota_exceeded = False
@@ -40,8 +45,16 @@ async def generate(
         remaining = user.quota - user.used_credits - user.reserved_credits
         if estimated_credits > remaining:
             quota_exceeded = True
+            logger.warning(
+                "quota exceeded | user_id=%s estimated_credits=%s remaining=%s",
+                user_id, estimated_credits, remaining,
+            )
         else:
             user.reserved_credits += estimated_credits
+            logger.info(
+                "quota reserved | user_id=%s estimated_credits=%s remaining_after=%s",
+                user_id, estimated_credits, remaining - estimated_credits,
+            )
         # TX commits here (end of async with block) — lock released
 
     # Write quota_exceeded log OUTSIDE the reserve TX so it is not rolled back (D-22)
@@ -83,7 +96,19 @@ async def generate(
             user = result.scalar_one_or_none()
             # user must exist here (we just checked above); skip None guard
             user.reserved_credits = max(0, user.reserved_credits - estimated_credits)
+            # quota is a soft cap: generation already ran and cannot be undone,
+            # so we bill actual regardless of overage rather than return a 402 here.
+            # a post-generation 402 would waste real API spend and give the user nothing.
             user.used_credits += actual_credits
+            logger.info(
+                "generate settled | user_id=%s prompt_tokens=%s completion_tokens=%s "
+                "estimated_credits=%s actual_credits=%s",
+                user_id,
+                generation_result.prompt_tokens,
+                generation_result.completion_tokens,
+                estimated_credits,
+                actual_credits,
+            )
 
             db.add(UsageLog(
                 user_id=user_id,

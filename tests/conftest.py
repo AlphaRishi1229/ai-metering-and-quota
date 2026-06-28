@@ -1,4 +1,5 @@
 import os
+from typing import AsyncGenerator
 
 TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/metering_test"
 os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
@@ -8,13 +9,13 @@ import asyncpg
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine, async_sessionmaker
 
 from app.main import app
 from app.database import get_db, Base
 
 
-async def _create_test_db():
+async def _create_test_db() -> None:
     # ponytail: asyncpg direct connect to admin DB; sqlalchemy can't CREATE DATABASE
     conn = await asyncpg.connect("postgresql://postgres:postgres@localhost:5432/postgres")
     try:
@@ -30,7 +31,7 @@ asyncio.run(_create_test_db())
 
 
 @pytest_asyncio.fixture
-async def test_engine():
+async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -41,7 +42,7 @@ async def test_engine():
 
 
 @pytest_asyncio.fixture
-async def db(test_engine):
+async def db(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     # Separate session for test assertions — not shared with the client
     AsyncTestSession = async_sessionmaker(test_engine, expire_on_commit=False)
     async with AsyncTestSession() as session:
@@ -49,11 +50,11 @@ async def db(test_engine):
 
 
 @pytest_asyncio.fixture
-async def client(test_engine):
+async def client(test_engine: AsyncEngine) -> AsyncGenerator[AsyncClient, None]:
     # Each HTTP request gets a fresh session (matches production get_db behaviour)
     AsyncTestSession = async_sessionmaker(test_engine, expire_on_commit=False)
 
-    async def override_get_db():
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         async with AsyncTestSession() as session:
             yield session
 
